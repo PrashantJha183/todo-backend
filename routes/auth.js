@@ -52,7 +52,7 @@ router.post(
       //Verifying error and returning it
       const registerResult = validationResult(req);
       if (!registerResult.isEmpty()) {
-        return res.status(400).json({ errors: result.array() });
+        return res.status(400).json({ errors: registerResult.array() });
       }
 
       //Using object destructuring to extract data from object
@@ -121,7 +121,7 @@ router.post(
       //Verifying error and returning it
       const loginResult = validationResult(req);
       if (!loginResult.isEmpty()) {
-        return res.status(400).json({ errors: result.array() });
+        return res.status(400).json({ errors: loginResult.array() });
       }
 
       //Using object destructuring to extract email and password from object

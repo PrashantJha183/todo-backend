@@ -44,7 +44,7 @@ const UserSchema = new Schema(
 //Remove sensitive data from json
 UserSchema.set("toJSON", {
   transform: (doc, ret) => {
-    delete ret._v;
+    delete ret.__v;
     delete ret.password;
     return ret;
   },

@@ -104,7 +104,7 @@ router.get("/savednotes", fetchData, async (req, res) => {
 
     //Remove _v field if there is any available
     const sanitizedNotes = allNotes.map((note) => {
-      const { _v, ...rest } = note.toObject();
+      const { __v, ...rest } = note.toObject();
       return rest;
     });
 

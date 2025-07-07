@@ -21,16 +21,20 @@ const limiter = rateLimit({
   max: 100, //maximum request allowed for this time frame
 });
 app.use(limiter);
+app.use("/", (req, res) => {
+  res.send("Welcome to todo api");
+});
+app.use("/auth", authRoutes);
+app.use("/notes", notesRoutes);
 
 (async () => {
-  await MongoDbConnection();
-  app.use("/", (req, res) => {
-    res.send("Welcome to todo api");
-  });
-  app.use("/auth", authRoutes);
-  app.use("/notes", notesRoutes);
+  try {
+    await MongoDbConnection();
 
-  app.listen(port, () => {
-    console.log(`Todo app backend is listening at http://localhost:${port}`);
-  });
+    app.listen(port, () => {
+      console.log(`Todo app backend is listening at http://localhost:${port}`);
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 })();
