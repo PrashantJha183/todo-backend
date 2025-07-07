@@ -24,7 +24,9 @@ app.use(limiter);
 
 (async () => {
   await MongoDbConnection();
-
+  app.use("/", (req, res) => {
+    res.send("Welcome to todo api");
+  });
   app.use("/auth", authRoutes);
   app.use("/notes", notesRoutes);
 
