@@ -46,14 +46,14 @@ app.use("/auth", authRoutes);
 app.use("/notes", notesRoutes);
 
 // Serve environment variables dynamically to frontend
-app.get("/env.js", (req, res) => {
-  res.setHeader("Content-Type", "application/javascript");
-  res.send(`
-    window._env_ = {
-      API_URL: "${process.env.FRONTEND_API_URL || ""}"
-    };
-  `);
-});
+// app.get("/env.js", (req, res) => {
+//   res.setHeader("Content-Type", "application/javascript");
+//   res.send(`
+//     window._env_ = {
+//       API_URL: "${process.env.FRONTEND_API_URL || ""}"
+//     };
+//   `);
+// });
 
 // Start server in an async IIFE
 (async () => {
