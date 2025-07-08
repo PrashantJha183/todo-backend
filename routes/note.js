@@ -132,7 +132,19 @@ router.patch("/task/:id", fetchData, async (req, res) => {
       }
     });
 
-    // If no fields provided, do nothing
+    // Validate and normalize status
+    if (updateFields.status) {
+      const normalized = updateFields.status.toLowerCase().replace(/\s+/g, "-");
+      const allowedStatuses = ["pending", "completed", "in-progress"];
+      if (allowedStatuses.includes(normalized)) {
+        updateFields.status = normalized;
+      } else {
+        return res.status(400).json({
+          message: "Invalid status value",
+        });
+      }
+    }
+
     if (Object.keys(updateFields).length === 0) {
       return res.status(200).json({
         message: "No fields provided to update. Note remains unchanged.",
