@@ -1,22 +1,15 @@
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
+import JWT_SECRET from "../middleware/jwtSecret.js";
 import User from "../models/user.js";
 import jwt from "jsonwebtoken";
 import fetchData from "../middleware/fetchData.js";
 const router = Router();
 
-dotenv.config();
-
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET not found in environment variable");
-}
 //--------------------------Creating a user using post request  /auth/resgister-------------------------------
 router.post(
-  "/register",
+  "/signup",
   [
     body("name")
       .trim()
@@ -149,14 +142,14 @@ router.post(
       console.log("Payload data: ", payload);
 
       //Sign JWT token using payload data and secret
-      const authToken = jwt.sign(payload, JWT_SECRET, {
+      const Authorization = jwt.sign(payload, JWT_SECRET, {
         expiresIn: "1h", //expires in 1 hour
       });
-      console.log("Token after login: ", authToken);
+      console.log("Token after login: ", Authorization);
 
       return res.status(200).json({
         message: "Login successful",
-        token: authToken,
+        token: Authorization,
         user: {
           id: user._id,
           name: user.name,

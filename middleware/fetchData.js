@@ -1,16 +1,11 @@
-import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-dotenv.config();
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET not found in environment varaibale");
-}
+import JWT_SECRET from "./jwtSecret.js";
 
 const fetchData = async (req, res, next) => {
   try {
     //Reading token from Authorization header
     const authHeader = req.header("Authorization");
+    console.log("Token received in header:", authHeader);
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       return res
         .status(401)
@@ -18,7 +13,12 @@ const fetchData = async (req, res, next) => {
     }
 
     //Extract  token value
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: "Token missing after Bearer prefix." });
+    }
 
     //Verify token using secret key
     const userData = jwt.verify(token, JWT_SECRET);

@@ -17,11 +17,9 @@ This is the backend REST API for the **ToDo application**, developed using:
 
 ```
 ├── app.js                # App entrypoint
-├── Dockerfile            # Docker configuration
-├── .env                  # Environment variables
 ├── database/
 │   └── mongoDB.js        # MongoDB setup
-├── models/               # Mongoose models (User, Notes)
+├── models/               # Mongoose models (user, notes)
 ├── routes/               # API routes
 │   ├── auth.js           # Register/Login
 │   └── note.js           # Notes CRUD
@@ -38,8 +36,6 @@ This is the backend REST API for the **ToDo application**, developed using:
 
 - Node.js (v18+ recommended)
 - MongoDB (Atlas or local)
-- Git
-- Docker (for containerization & deployment)
 
 ---
 
@@ -85,27 +81,11 @@ node app.js
 
 ---
 
-## 🐳 Docker Setup
-
-### 🧱 Build Docker image
-
-```bash
-docker build -t todo-backend .
-```
-
-### ▶️ Run Docker container
-
-```bash
-docker run -p 5000:5000 --env-file .env todo-backend
-```
-
----
-
 ## 🔐 API Endpoints Overview
 
-All secure routes require an `authToken` header with a valid JWT.
+All secure routes require an `Authorization` header with a valid JWT.
 
-### `POST /auth/register`
+### `POST /auth/signup`
 
 Register a user.
 
@@ -153,12 +133,12 @@ Returns authenticated user's data (name).
 **Headers:**
 
 ```
-authToken: <jwt_token>
+Authorization: <jwt_token>
 ```
 
 ---
 
-### `POST /notes/addnotes`
+### `POST /notes/task`
 
 Create a note.
 
@@ -173,32 +153,48 @@ Create a note.
 
 ---
 
-### `GET /notes/savednotes`
+### `GET /notes/task`
 
 Fetch all notes of the logged-in user.
 
 **Headers:**
 
 ```
-authToken: <jwt_token>
+Authorization: Bearer <jwt_token>
 ```
 
 ---
 
-## 🌐 Deployment with Render
+### `PUT /notes/task/{id}`
 
-1. Connect your GitHub repo to [Render](https://render.com).
-2. Select "Web Service".
-3. Set Environment:
+Update a note.
+
+```json
+{
+  "title": "My Task",
+  "description": "Complete assignment",
+  "tags": "work, teamwork",
+  "dueDate": "2025-07-08T00:00:00.000Z"
+}
+```
+
+---
+
+### `DELETE /notes/task/{id}`
+
+Delete a note.
+
+**Headers:**
 
 ```
-Build Command: docker build -t todo-backend .
-Start Command: docker run -p 5000:5000 --env-file .env todo-backend
+Authorization: Bearer <jwt_token>
 ```
 
-4. Add environment variables in Render’s dashboard.
-
-5. Enable "Auto Deploy on Git Push" ✅
+```json
+{
+  "message": "Note deleted successfully"
+}
+```
 
 ---
 
@@ -218,6 +214,7 @@ Start Command: docker run -p 5000:5000 --env-file .env todo-backend
 
 **Prashant Jha**  
 [GitHub](https://github.com/PrashantJha183)  
-[LinkedIn](https://linkedin.com/in/prashantjha183)
+[LinkedIn](https://www.linkedin.com/in/jhaprashant183/)
+[Portfolio](https://my-portfolio-phi-eight-65.vercel.app/)
 
 ---

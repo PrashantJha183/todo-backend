@@ -21,9 +21,8 @@ const limiter = rateLimit({
   max: 100, //maximum request allowed for this time frame
 });
 app.use(limiter);
-app.use("/", (req, res) => {
-  res.send("Welcome to todo api");
-});
+
+//routes to hit endpoint 
 app.use("/auth", authRoutes);
 app.use("/notes", notesRoutes);
 
