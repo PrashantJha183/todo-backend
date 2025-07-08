@@ -20,16 +20,21 @@ app.use(
 );
 app.use(express.json());
 
-// Enable CORS safely (optionally configure origins for production)
+// Enable CORS safely
 app.use(
   cors({
-    origin: ["http://localhost:5173/", "http://127.0.0.1:5173/"],
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      process.env.FRONTEND_API_URL,
+    ].filter(Boolean),
+    credentials: true, // enable credentials if cookies or auth headers are used
   })
 );
 
 // Rate limiter - protect from brute force
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // max requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,

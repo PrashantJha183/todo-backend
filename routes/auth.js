@@ -75,7 +75,7 @@ router.post(
       //Generate jwt token once user get registered
       const payload = { userId: user._id };
       const token = jwt.sign(payload, JWT_SECRET, {
-        expiresIn: "1h", //token expire in 1 hour
+        expiresIn: "15m", //token expire in 15 minutes
       });
       console.log("JWT token generated: ", token);
 
@@ -143,7 +143,7 @@ router.post(
 
       //Sign JWT token using payload data and secret
       const Authorization = jwt.sign(payload, JWT_SECRET, {
-        expiresIn: "1h", //expires in 1 hour
+        expiresIn: "15 minutes", //expires in 15 minutes
       });
       console.log("Token after login: ", Authorization);
 
