@@ -1,6 +1,17 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
+/**
+ * Helper function to get current date-time in IST.
+ * Returns a native JavaScript Date object representing IST time.
+ */
+function getISTDate() {
+  const currentUTC = new Date();
+  const istOffsetMinutes = 330; // IST is UTC+5:30
+  const istTime = new Date(currentUTC.getTime() + istOffsetMinutes * 60000);
+  return istTime;
+}
+
 const NotesSchema = new Schema(
   {
     user: {
@@ -34,9 +45,15 @@ const NotesSchema = new Schema(
       match: [/^[\w\s.,!?-]+$/, "Tags contains invalid characters"],
     },
 
+    status: {
+      type: String,
+      enum: ["pending", "completed", "in-progress"],
+      default: "pending",
+    },
+
     createdDate: {
       type: Date,
-      default: Date.now,
+      default: getISTDate,
     },
 
     dueDate: {

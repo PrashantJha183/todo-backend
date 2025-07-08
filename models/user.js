@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
+// Helper to get current IST Date
+function getISTDate() {
+  const currentUTC = new Date();
+  const istOffsetMinutes = 330; // IST = UTC + 5:30
+  return new Date(currentUTC.getTime() + istOffsetMinutes * 60000);
+}
+
 const UserSchema = new Schema(
   {
     name: {
@@ -32,7 +39,7 @@ const UserSchema = new Schema(
 
     date: {
       type: Date,
-      default: Date.now,
+      default: getISTDate,
     },
   },
   {
@@ -41,7 +48,7 @@ const UserSchema = new Schema(
   }
 );
 
-//Remove sensitive data from json
+// Remove sensitive data from output JSON
 UserSchema.set("toJSON", {
   transform: (doc, ret) => {
     delete ret.__v;

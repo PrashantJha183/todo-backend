@@ -2,9 +2,10 @@ import Notes from "../models/notes.js";
 import { body, validationResult } from "express-validator";
 import { Router } from "express";
 import fetchData from "../middleware/fetchData.js";
+
 const router = Router();
 
-//--------------------------Adding a notes notes/addnotes-----------------------------------------
+//-------------------------- Add a new note - POST /notes/task --------------------------
 router.post(
   "/task",
   fetchData,
@@ -14,55 +15,53 @@ router.post(
       .notEmpty()
       .withMessage("Title is required")
       .isLength({ min: 2 })
-      .withMessage("Title must be 2 characters long"),
+      .withMessage("Title must be at least 2 characters long"),
+
     body("description")
       .trim()
       .notEmpty()
-      .withMessage("Description cannnot empty")
+      .withMessage("Description cannot be empty")
       .isLength({ min: 5 })
       .withMessage("Description must be at least 5 characters long"),
+
     body("dueDate")
       .notEmpty()
-      .withMessage("Due date cannnot empty")
+      .withMessage("Due date cannot be empty")
       .isISO8601()
-      .withMessage("Due date must be valid date"),
+      .withMessage("Due date must be a valid date"),
 
     body("tags").optional().trim(),
+
+    body("status")
+      .optional()
+      .isIn(["pending", "completed", "in-progress"])
+      .withMessage("Invalid status value"),
   ],
   async (req, res) => {
     try {
-      // Validate request body
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      //Using object destucturing to extract data from object
-      const { title, description, dueDate, tags } = req.body;
-
-      //User Id from extratced from jwt token decoded by middleware
+      const { title, description, dueDate, tags, status } = req.body;
       const userId = req.user;
-      console.log("User Id: ", userId);
 
-      //Verifying that the notes is already exsists for the loggedin user with the same title
-      const exsistingNotes = await Notes.findOne({
-        user: userId,
-        title: title,
-      });
+      const existingNote = await Notes.findOne({ user: userId, title });
 
-      if (exsistingNotes) {
+      if (existingNote) {
         return res
           .status(400)
           .json({ message: "You already have a note with this title" });
       }
 
-      //If notes are not available then create a notes and save new notes
       const newNote = new Notes({
         user: userId,
         title,
         description,
-        dueDate: dueDate || undefined,
+        dueDate,
         tags: tags || "",
+        status: status || "pending",
       });
 
       await newNote.save();
@@ -75,96 +74,97 @@ router.post(
           description: newNote.description,
           dueDate: newNote.dueDate,
           tags: newNote.tags,
+          status: newNote.status,
         },
       });
     } catch (error) {
+      console.error("POST /task error:", error);
       res.status(500).json({ message: "Server error" });
     }
   }
 );
 
-//----------------------------Fetched saved notes notes/savednotes-----------------------------------------
+//-------------------------- Get all notes - GET /notes/task --------------------------
 router.get("/task", fetchData, async (req, res) => {
   try {
-    //Fetching userId from middleware (Payload already has userId)
     const userId = req.user;
 
-    //Fetched all notes saved by logged in user
     const allNotes = await Notes.find({ user: userId }).sort({
       createdDate: -1,
     });
 
-    //Remove _v field if there is any available
     const sanitizedNotes = allNotes.map((note) => {
       const { __v, ...rest } = note.toObject();
       return rest;
     });
 
-    return res
-      .status(200)
-      .json({ message: "Notes fetched successfully", notes: sanitizedNotes });
+    res.status(200).json({
+      message: "Notes fetched successfully",
+      notes: sanitizedNotes,
+    });
   } catch (error) {
+    console.error("GET /task error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// --------------------------------------Update notes route /notes/task/{id}----------------------------------------------
-router.put("/task/:id", fetchData, async (req, res) => {
+//-------------------------- Update a note - PATCH /notes/task/:id --------------------------
+router.patch("/task/:id", fetchData, async (req, res) => {
   try {
-    // Validate request body
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const noteId = req.params.id;
+
+    const taskNote = await Notes.findById(noteId);
+    if (!taskNote) {
+      return res.status(404).json({ message: "Note not found" });
     }
 
-    //FInd notes by ID from URL
-    let taskNotes = await Notes.findById(req.params.id);
-    if (!taskNotes) {
-      return res.status(404).json("Not found");
+    if (taskNote.user.toString() !== req.user) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    //Compare loggedin userID with the note's user field
-    if (taskNotes.user.toString() !== req.user) {
-      return res.status(403).send("Access denied");
-    }
-
-    //Using object destructuring to get this data from object
-    const { title, description, tags, dueDate } = req.body;
-
-    //Prepare the updated fields only if provided in request
+    // Determine fields to update
     const updateFields = {};
+    const allowedFields = ["title", "description", "tags", "dueDate", "status"];
 
-    if (title !== undefined) updateFields.title = title.trim();
-    if (description !== undefined)
-      updateFields.description = description.trim();
-    if (tags !== undefined) updateFields.tags = tags.trim();
-    if (dueDate !== undefined) updateFields.dueDate = dueDate.trim();
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updateFields[field] = req.body[field];
+      }
+    });
 
-    //Update the notes in the database
-    const updateNotes = await Notes.findByIdAndUpdate(
-      req.params.id,
+    // If no fields provided, do nothing
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(200).json({
+        message: "No fields provided to update. Note remains unchanged.",
+        note: taskNote,
+      });
+    }
+
+    const updatedNote = await Notes.findByIdAndUpdate(
+      noteId,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
-    return res.status(200).json({
-      message: "Notes updated successfully",
-      notes: updateNotes,
+    res.status(200).json({
+      message: "Note updated successfully",
+      note: updatedNote,
     });
   } catch (error) {
+    console.error("PATCH /task/:id error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+//-------------------------- Delete a note - DELETE /notes/task/:id --------------------------
 router.delete("/task/:id", fetchData, async (req, res) => {
   try {
     const noteId = req.params.id;
 
-    // Validate that the id is a valid Mongo ObjectId
     if (!noteId || !noteId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: "Invalid note ID" });
     }
 
-    // Find note belonging to the logged-in user
     const note = await Notes.findOne({ _id: noteId, user: req.user });
 
     if (!note) {
@@ -175,7 +175,7 @@ router.delete("/task/:id", fetchData, async (req, res) => {
 
     await note.deleteOne();
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Note deleted successfully",
       deletedNote: {
         id: note._id,
@@ -183,11 +183,12 @@ router.delete("/task/:id", fetchData, async (req, res) => {
         description: note.description,
         dueDate: note.dueDate,
         tags: note.tags,
+        status: note.status,
       },
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("DELETE /task/:id error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
