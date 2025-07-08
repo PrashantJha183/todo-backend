@@ -26,7 +26,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      process.env.FRONTEND_API_URL,
+      "https://utilers.netlify.app",
+      // process.env.FRONTEND_API_URL,
     ].filter(Boolean),
     credentials: true, // enable credentials if cookies or auth headers are used
   })
