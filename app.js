@@ -1,39 +1,64 @@
 import express from "express";
+import dotenv from "dotenv";
 import MongoDbConnection from "./database/mongoDB.js";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.js";
 import notesRoutes from "./routes/note.js";
-const app = express();
-const port = 5000;
 
-//Security middleware
-app.use(helmet());
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+// Security middleware
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // allow loading assets from different origins if needed
+  })
+);
 app.use(express.json());
 
-//Prevent cors policy issue
-app.use(cors());
+// Enable CORS safely (optionally configure origins for production)
+app.use(
+  cors({
+    origin: ["http://localhost:5173/", "http://127.0.0.1:5173/"],
+  })
+);
 
-//Rate the limit to hit apis
+// Rate limiter - protect from brute force
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, //15 minutes
-  max: 100, //maximum request allowed for this time frame
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 100, // max requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
-//routes to hit endpoint 
+// Register routes
 app.use("/auth", authRoutes);
 app.use("/notes", notesRoutes);
 
+// Serve environment variables dynamically to frontend
+app.get("/env.js", (req, res) => {
+  res.setHeader("Content-Type", "application/javascript");
+  res.send(`
+    window._env_ = {
+      API_URL: "${process.env.FRONTEND_API_URL || ""}"
+    };
+  `);
+});
+
+// Start server in an async IIFE
 (async () => {
   try {
     await MongoDbConnection();
-
     app.listen(port, () => {
-      console.log(`Todo app backend is listening at http://localhost:${port}`);
+      console.log(`Todo app backend listening on http://localhost:${port}`);
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Server startup error:", error);
+    process.exit(1);
   }
 })();
