@@ -27,6 +27,7 @@ app.use(
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "https://utilers.netlify.app",
+       "https://utilers.netlify.app/",
       "https://todo-backend-8iko.onrender.com",
       // process.env.FRONTEND_API_URL,
     ].filter(Boolean),
